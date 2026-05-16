@@ -84,6 +84,18 @@ p {
 
 
 /**
+ * VNC viewport: force the browser default arrow cursor. noVNC sets
+ * `cursor: none` on its canvas (it normally draws its own cursor overlay or
+ * the one-pixel dot fallback), which leaves the user without any visible
+ * pointer when we don't have server-side cursor data. Override it so the
+ * native OS cursor stays visible.
+ */
+.vnc-cursor,
+.vnc-cursor canvas {
+    cursor: default !important;
+}
+
+/**
  * Timescape Root element
  */
 .timescape {
