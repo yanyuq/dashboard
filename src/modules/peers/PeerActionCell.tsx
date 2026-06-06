@@ -8,8 +8,10 @@ import {
 } from "@components/DropdownMenu";
 import FullTooltip from "@components/FullTooltip";
 import { notify } from "@components/Notification";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { IconInfoCircle } from "@tabler/icons-react";
 import {
+  CheckCircle2,
   ExternalLinkIcon,
   MonitorIcon,
   MoreVertical,
@@ -22,7 +24,10 @@ import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { usePeer } from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { ExitNodeDropdownButton } from "@/modules/exit-node/ExitNodeDropdownButton";
+import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
+import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
 import InlineLink from "@components/InlineLink";
 import { useDialog } from "@/contexts/DialogProvider";
 
@@ -40,6 +45,42 @@ export default function PeerActionCell() {
     if (isDashboardSSHEnabled) return true;
     return !isClientSSHEnabled;
   }, [peer]);
+
+  const showApprove = peer.approval_required && permission.peers.update;
+
+  const approvePeer = async () => {
+    const choice = await confirm({
+      title: `Approve peer '${peer.name}'?`,
+      description: "Are you sure you want to approve this peer?",
+      confirmText: "Approve",
+      cancelText: "Cancel",
+      type: "default",
+    });
+    if (!choice) return;
+    notify({
+      title: `Peer ${peer.name} approved`,
+      description: `This peer was approved and can now connect to other peers.`,
+      promise: update({
+        name: peer.name,
+        ssh: peer.ssh_enabled,
+        loginExpiration: peer.login_expiration_enabled,
+        approval_required: false,
+      }).then(() => {
+        mutate("/peers");
+        mutate("/groups");
+      }),
+      loadingMessage: "Approving peer...",
+    });
+  };
+
+  // The Connect column previously hosted SSH / RDP entry points. We
+  // fold those into the action menu — gated on a non-mobile, online
+  // peer — so the table loses a column and the connect affordance is
+  // one click away inside the three-dot menu.
+  const peerOs = getOperatingSystem(peer?.os);
+  const isMobile =
+    peerOs === OperatingSystem.ANDROID || peerOs === OperatingSystem.IOS;
+  const showRemoteAccessItems = !isMobile && !!peer.connected;
 
   const toggleLoginExpiration = async () => {
     const text = peer.login_expiration_enabled ? "disabled" : "enabled";
@@ -112,6 +153,26 @@ export default function PeerActionCell() {
               View Details
             </div>
           </DropdownMenuItem>
+
+          {showApprove && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={approvePeer}>
+                <div className={"flex gap-3 items-center"}>
+                  <CheckCircle2 size={14} className={"shrink-0"} />
+                  Approve
+                </div>
+              </DropdownMenuItem>
+            </>
+          )}
+
+          {showRemoteAccessItems && (
+            <>
+              <DropdownMenuSeparator />
+              <SSHButton peer={peer} isDropdown={true} />
+              <RDPButton peer={peer} isDropdown={true} />
+            </>
+          )}
 
           <DropdownMenuSeparator />
           <FullTooltip

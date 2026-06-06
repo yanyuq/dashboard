@@ -8,7 +8,6 @@ import DNSIcon from "@/assets/icons/DNSIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
-import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import SidebarItem from "@/components/SidebarItem";
 import { NavigationVersionInfo } from "@/components/VersionInfo";
@@ -75,17 +74,7 @@ export default function Navigation({
               <SidebarItemGroup>
                 <SidebarItem
                   icon={<ControlCenterIcon size={16} />}
-                  label={
-                    <div className={"flex items-center gap-2"}>
-                      Control Center
-                      <SmallBadge
-                        text={"Beta"}
-                        variant={"sky"}
-                        className={"text-[8px] leading-none py-[3px] px-[5px]"}
-                        textClassName={"top-0"}
-                      />
-                    </div>
-                  }
+                  label="Control Center"
                   href={"/control-center"}
                   visible={permission.policies.read}
                 />
@@ -94,15 +83,25 @@ export default function Navigation({
                   icon={<PeerIcon />}
                   label="Peers"
                   href={"/peers"}
+                  collapsible
                   visible={!isRestricted}
-                />
+                >
+                  <SidebarItem
+                    label="User Devices"
+                    isChild
+                    href={"/peers/users"}
+                    exactPathMatch={true}
+                    visible={!isRestricted}
+                  />
+                  <SidebarItem
+                    label="Servers"
+                    isChild
+                    href={"/peers/servers"}
+                    exactPathMatch={true}
+                    visible={!isRestricted}
+                  />
+                </SidebarItem>
 
-                <SidebarItem
-                  icon={<SetupKeysIcon />}
-                  label="Setup Keys"
-                  href={"/setup-keys"}
-                  visible={permission.setup_keys.read}
-                />
                 <SidebarItem
                   icon={<AccessControlIcon />}
                   label="Access Control"
@@ -170,6 +169,13 @@ export default function Navigation({
                     label="Clusters"
                     isChild
                     href={"/reverse-proxy/clusters"}
+                    exactPathMatch={true}
+                    visible={permission?.services?.read}
+                  />
+                  <SidebarItem
+                    label="Access Logs"
+                    isChild
+                    href={"/reverse-proxy/logs"}
                     exactPathMatch={true}
                     visible={permission?.services?.read}
                   />
@@ -278,13 +284,6 @@ const ActivityNavigationItem = () => {
         label="Audit Events"
         href={"/events/audit"}
         isChild
-        exactPathMatch={true}
-        visible={permission.events.read}
-      />
-      <SidebarItem
-        label="Proxy Events"
-        isChild
-        href={"/events/proxy"}
         exactPathMatch={true}
         visible={permission.events.read}
       />
